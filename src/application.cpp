@@ -40,6 +40,15 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif // NDEBUG
 
+struct QueueFamilyIndices
+{
+	int graphicsFamily = -1;
+
+	bool IsCompelete()
+	{
+		return graphicsFamily >= 0;
+	}
+};
 
 class HelloTriangleApplication
 {
@@ -50,6 +59,8 @@ public:
 
 	VkInstance vkInstance;
 	VkDebugUtilsMessengerEXT debugMessenger;
+	VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
+
 public:
 	void Run()
 	{
@@ -76,6 +87,7 @@ private:
 	{
 		CreateInstance();
 		SetupDebugMessenger();
+		PickPhysicalDevice();
 	}
 
 	void MainLoop()
@@ -190,15 +202,13 @@ private:
 			vkInstanceCreateInfo.pNext = nullptr;
 		}
 
-		vkInstanceCreateInfo.enabledLayerCount = 0;
-
 		if (vkCreateInstance(&vkInstanceCreateInfo, nullptr, &vkInstance) != VK_SUCCESS)
 		{
 			throw std::runtime_error("fail to craete instance!");
 		}
 		else
 		{
-			std::cout << "succeed to create vk instance" << std::endl;
+			std::cout << "succeed to create vk instance!!!" << std::endl;
 		}
 	}
 
@@ -223,6 +233,47 @@ private:
 		std::cerr << "[VALIDATION LAYER]: " << pCallback->pMessage << std::endl;
 
 		return VK_FALSE;
+	}
+
+	bool isDeviceSuitable(VkPhysicalDevice device)
+	{
+		VkPhysicalDeviceProperties  deviceProperties;
+		VkPhysicalDeviceFeatures    deviceFeatures;
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+		std::cout << deviceProperties.deviceName << std::endl;
+		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+	}
+
+	void PickPhysicalDevice()
+	{
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(vkInstance, &deviceCount, nullptr);
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(vkInstance, &deviceCount, devices.data());
+
+		for (const auto& device : devices)
+		{
+			if (isDeviceSuitable(device))
+			{
+				vkPhysicalDevice = device;
+				break;
+			}
+		}
+		
+		if (vkPhysicalDevice == VK_NULL_HANDLE)
+		{
+			throw std::runtime_error("failed to find a suitable GPU");
+		}
+	}
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device)
+	{
+		QueueFamilyIndices indices;
+
+
+
+		return indices;
 	}
 };
 
