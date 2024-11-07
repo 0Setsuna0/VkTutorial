@@ -60,6 +60,7 @@ public:
 	VkInstance vkInstance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
+	VkDevice vkDevice;
 
 public:
 	void Run()
@@ -88,6 +89,7 @@ private:
 		CreateInstance();
 		SetupDebugMessenger();
 		PickPhysicalDevice();
+		CreateLogicalDevice();
 	}
 
 	void MainLoop()
@@ -217,10 +219,11 @@ private:
 	{
 		if (!enableValidationLayers) return;
 
-		VkDebugUtilsMessengerCreateInfoEXT createInfo;
-		PopulateDebugMessengerCreateInfo(createInfo);
+		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+		PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
-		if (CreateDebugUtilsMessengerEXT(vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+		if (CreateDebugUtilsMessengerEXT(vkInstance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) 
+		{
 			throw std::runtime_error("failed to set up debug messenger!");
 		}
 	}
@@ -242,7 +245,10 @@ private:
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 		std::cout << deviceProperties.deviceName << std::endl;
-		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+		
+		QueueFamilyIndices indices = FindQueueFamilies(device);
+
+		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices.IsCompelete();
 	}
 
 	void PickPhysicalDevice()
@@ -271,9 +277,33 @@ private:
 	{
 		QueueFamilyIndices indices;
 
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
+		int i = 0;
+		for (const auto& queueFamily : queueFamilies)
+		{
+			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT);
+			{
+				indices.graphicsFamily = i;
+			}
+			if (indices.IsCompelete())
+			{
+				break;
+			}
+			i++;
+		}
 
 		return indices;
+	}
+
+	void CreateLogicalDevice()
+	{
+		QueueFamilyIndices indices = FindQueueFamilies(vkPhysicalDevice);
+
+		VkDeviceQueueCreateInfo deviceQueueCreateInfo = {};
 	}
 };
 
