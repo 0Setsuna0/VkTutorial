@@ -108,6 +108,7 @@ public:
 	VkPipeline graphicsPipeline;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkCommandPool commandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
 
 public:
 	void Run()
@@ -144,6 +145,7 @@ private:
 		CreateGraphicsPipeline();
 		CreateFramebuffers();
 		CreateCommandPool();
+		CreateCommandBuffers();
 	}
 
 	void MainLoop()
@@ -166,6 +168,7 @@ private:
 		vkDestroyPipeline(vkDevice, graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(vkDevice, pipelineLayout, nullptr);
 		vkDestroyRenderPass(vkDevice, renderPass, nullptr);
+		vkDestroyCommandPool(vkDevice, commandPool, nullptr);
 		for (auto framebuffer : swapChainFramebuffers)
 		{
 			vkDestroyFramebuffer(vkDevice, framebuffer, nullptr);
@@ -890,6 +893,34 @@ private:
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 		poolInfo.flags = 0;
+
+		if (vkCreateCommandPool(vkDevice, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+		{
+			throw std::runtime_error("fail to create command pool");
+		}
+		else
+		{
+			std::cout << "succeed to create command pool" << std::endl;
+		}
+	}
+
+	void CreateCommandBuffers()
+	{
+		commandBuffers.resize(swapChainFramebuffers.size());
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+		if (vkAllocateCommandBuffers(vkDevice, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		{
+			throw std::runtime_error("fail to create command buffers");
+		}
+		else
+		{
+			std::cout << "succeed to create command buffers" << std::endl;
+		}
 
 
 	}
