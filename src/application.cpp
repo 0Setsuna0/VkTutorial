@@ -115,9 +115,14 @@ struct Vertex {
 };
 
 const std::vector<Vertex> vertices = {
-	{{0.0f, -0.5f}, {1.0f, 0.3f, 0.0f}},
+	{{0.5f, -0.5f}, {1.0f, 0.3f, 0.0f}},
 	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}}
+	{{-0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}
+};
+
+const std::vector<uint16_t> indices = {
+	0,1,2,2,3,0
 };
 
 class HelloTriangleApplication
@@ -136,6 +141,8 @@ private:
 	VkSurfaceKHR vkSurface;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
 
 	VkSwapchainKHR vkSwapChain;
 	std::vector<VkImage> vkSwapChainImages;
@@ -200,6 +207,7 @@ private:
 		CreateFramebuffers();
 		CreateCommandPool();
 		CreateVertexBuffer();
+		CreateIndexBuffer();
 		CreateCommandBuffers();
 		CreateSyncObjects();
 	}
@@ -228,6 +236,8 @@ private:
 
 		vkDestroyBuffer(vkDevice, vertexBuffer, nullptr);
 		vkFreeMemory(vkDevice, vertexBufferMemory, nullptr);
+		vkDestroyBuffer(vkDevice, indexBuffer, nullptr);
+		vkFreeMemory(vkDevice, indexBufferMemory, nullptr);
 
 		vkDestroyDevice(vkDevice, nullptr);
 
@@ -790,6 +800,29 @@ private:
 		vkFreeMemory(vkDevice, stagingBufferMemory, nullptr);
 	}
 
+	void CreateIndexBuffer()
+	{
+		VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingMemory;
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingMemory);
+
+		void* data;
+		vkMapMemory(vkDevice, stagingMemory, 0, bufferSize, 0, &data);
+		memcpy(data, indices.data(), bufferSize);
+		vkUnmapMemory(vkDevice, stagingMemory);
+
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+
+		CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+		vkDestroyBuffer(vkDevice, stagingBuffer, nullptr);
+		vkFreeMemory(vkDevice, stagingMemory, nullptr);
+	}
+
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
@@ -1120,6 +1153,7 @@ private:
 		VkBuffer vertexBuffers[] = { vertexBuffer };
 		VkDeviceSize offsetes[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsetes);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
@@ -1135,7 +1169,7 @@ private:
 		scissor.extent = vkSwapChainExtent;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
 
