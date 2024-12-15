@@ -13,7 +13,9 @@ set(CMAKE_CXX_STANDARD 17)
 project ("vk_tutorial")
 
 set(SHADER_DIR "${CMAKE_SOURCE_DIR}/shader/")
+set(ASSET_DIR "${CMAKE_SOURCE_DIR}/asset/")
 add_definitions(-DSHADER_DIR="${SHADER_DIR}")
+add_definitions(-DASSET_DIR="${ASSET_DIR}")
 
 add_subdirectory ("src")
 add_subdirectory ("3rd")

@@ -13,3 +13,4 @@ target_link_libraries(vk_tutorial PUBLIC glfw)
 # 设置头文件搜索路径
 target_include_directories(vk_tutorial PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(vk_tutorial PUBLIC ../srcs)
+target_include_directories(vk_tutorial PRIVATE "${CMAKE_SOURCE_DIR}/3rd")
